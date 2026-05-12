@@ -1,157 +1,134 @@
-🕵️‍♂️ Fraud Analytics
+# 🕵️‍♂️ Fraud Analytics  
 A graph‑enhanced and gradient‑boosted machine learning project for detecting fraudulent financial transactions using temporal validation, structured preprocessing, relational modeling, and rigorous evaluation.
 
-📂 Project Overview
-This project builds, evaluates, and compares multiple fraud‑detection models using the IEEE‑CIS Fraud Detection dataset.
+---
+
+## 📂 Project Overview  
+This project builds, evaluates, and compares multiple fraud‑detection models using the IEEE‑CIS Fraud Detection dataset.  
 The workflow includes temporal data splitting, extensive preprocessing, graph construction, GNN modeling, XGBoost baselines, and hybrid architectures.
 
-The modeling pipeline evolved through empirical experimentation, ultimately demonstrating that tabular XGBoost models outperform GNN‑only and hybrid models, while GNNs still provide valuable relational insights.
+Through empirical experimentation, the project demonstrates that **tabular XGBoost models outperform GNN‑only and hybrid models**, while GNNs still provide valuable relational insights.
 
-🧹 Data Acquisition & Preparation
-Data Source
-IEEE‑CIS Fraud Detection dataset (Kaggle)
+---
 
-500k+ transactions across Transaction and Identity tables
+## 🧹 Data Acquisition & Preparation  
 
-Joined using TransactionID
+### **Data Source**
+- IEEE‑CIS Fraud Detection dataset (Kaggle)  
+- 500k+ transactions across **Transaction** and **Identity** tables  
+- Joined using `TransactionID`
 
-Temporal Split
-50/50 time‑based split (train → earlier period, test → future period)
+### **Temporal Split**
+- 50/50 time‑based split (train = earlier period, test = future period)  
+- Prevents leakage and mimics real‑world deployment
 
-Prevents leakage and mimics real‑world deployment
+### **Exploratory Data Analysis**
+- Missingness patterns across identity features  
+- Distribution of `TransactionAmt` and time deltas  
+- High‑cardinality categorical exploration (emails, cards, devices)  
+- Correlation analysis of masked V/C features  
+- Structural patterns for graph construction (shared cards, devices, IPs)
 
-EDA Highlights
-Missingness patterns across identity features
+### **Cleaning & Feature Engineering**
+- Missing values encoded as explicit categories  
+- Log‑transform applied to `TransactionAmt`  
+- Cyclical encoding of `TransactionDT` (hour/day sin‑cos)  
+- Known‑token reduction for emails, devices, and rare categories  
+- Downcasting numeric dtypes for memory efficiency  
+- All categorical features converted to `category` dtype  
+- Consistent numeric encoding across train/test  
 
-Distribution of TransactionAmt and time deltas
+---
 
-High‑cardinality categorical exploration (emails, cards, devices)
-
-Correlation analysis of masked V/C features
-
-Structural patterns for graph construction (shared cards, devices, IPs)
-
-Cleaning & Feature Engineering
-Missing values encoded as explicit categories (no imputation)
-
-Log‑transform applied to TransactionAmt
-
-Cyclical encoding of TransactionDT (sin/cos for hour & day)
-
-Known‑token reduction for emails, devices, and rare categories
-
-Downcasting numeric dtypes for memory efficiency
-
-All categorical features converted to category dtype
-
-Consistent numeric encoding across train/test
-
-🧠 Baseline Model — Logistic Regression
+## 🧠 Baseline Model — Logistic Regression  
 A simple baseline trained on cleaned tabular features.
 
-Performance:
+**Performance:**  
+- **AUC:** 0.87  
+- Demonstrated strong predictive signal even without relational modeling
 
-AUC: 0.87
+---
 
-Demonstrated strong predictive signal even without relational modeling
+## 🔗 Graph Construction & GNN Models  
 
-🔗 Graph Construction & GNN Models
-Graph Structure
-Nodes = transactions
+### **Graph Structure**
+- Nodes = transactions  
+- Edges = shared card identifiers (`card1`, `card1+card2`)  
 
-Edges = shared card identifiers (card1, card1+card2)
+### **GraphSAGE Experiments**
 
-GraphSAGE Experiments
-1 Edge (card1)
+#### **1 Edge (card1)**
+- **AUC:** 0.9302  
+- High recall but high false positives  
 
-AUC: 0.9302
+#### **2 Edges (card1 + card2)**
+- **AUC:** 0.9364  
+- Higher precision  
+- Higher recall  
+- Fewer false positives  
+- Strongest GNN variant  
 
-High recall but high false positives
+#### **Ablation Study**
+- Removing V‑features → ~8% performance drop  
 
-2 Edges (card1 + card2)
+#### **Supervised Contrastive Learning (SupCon)**
+- Minimal AUC gain (+0.0001)  
+- Reduced false positives but added instability  
+- Not worth added complexity  
 
-AUC: 0.9364
+---
 
-Higher precision, higher recall, fewer false positives
-
-Strongest GNN variant
-
-Ablation Study
-
-Removing V‑features → ~8% performance drop
-
-Supervised Contrastive Learning (SupCon)
-
-Minimal AUC gain (+0.0001)
-
-Reduced false positives but added instability
-
-Not worth added complexity
-
-⚡ XGBoost — Tabular Baseline
+## ⚡ XGBoost — Tabular Baseline  
 XGBoost delivered the strongest standalone performance.
 
-Results:
+**Results:**  
+- **AUC:** 0.9566  
+- **Precision:** 0.3352  
+- **Recall:** 0.8352  
+- False positives cut nearly in half vs. GNNs  
+- Demonstrated that tabular patterns dominate predictive power in this dataset  
 
-AUC: 0.9566
+---
 
-Precision: 0.3352
+## 🧪 Hybrid Models (GNN + XGBoost)  
 
-Recall: 0.8352
+### **GNN Embeddings + XGBoost**
+- **AUC:** 0.9524  
+- Precision increased sharply  
+- Recall dropped → more conservative model  
 
-False positives cut nearly in half vs. GNNs
+### **GNN + SupCon + XGBoost**
+- **AUC:** 0.9508  
+- Added complexity without meaningful benefit  
 
-Demonstrated that tabular patterns dominate predictive power in this dataset
-
-🧪 Hybrid Models (GNN + XGBoost)
-GNN Embeddings + XGBoost
-AUC: 0.9524
-
-Precision increased sharply
-
-Recall dropped → more conservative model
-
-GNN + SupCon + XGBoost
-AUC: 0.9508
-
-Added complexity without meaningful benefit
-
-Threshold Optimization
-Optimal operating point identified at threshold 0.6450:
-
-Precision: 0.7121
-
-Recall: 0.7002
+### **Threshold Optimization**
+Optimal operating point identified at threshold **0.6450**:  
+- **Precision:** 0.7121  
+- **Recall:** 0.7002  
 
 Balanced tradeoff for real‑world fraud operations.
 
-🖥️ User Interface (Streamlit)
-The final Streamlit dashboard includes:
+---
 
-Transaction lookup by TransactionID
+## 🖥️ User Interface (Streamlit)  
+The final Streamlit dashboard includes:  
+- Transaction lookup by `TransactionID`  
+- Fraud probability score from the hybrid model  
+- Threshold slider for dynamic decisioning  
+- Clean, user‑centric layout with real test‑set data  
 
-Fraud probability score from the hybrid model
+---
 
-Threshold slider for dynamic decisioning
+## 📊 Tools & Technologies  
+- **Python**  
+- **Pandas, NumPy**  
+- **Scikit‑Learn, XGBoost, Imbalanced‑Learn**  
+- **PyTorch Geometric (GraphSAGE)**  
+- **UMAP / t‑SNE**  
+- **Matplotlib, Seaborn**  
+- **Streamlit**  
+- **Jupyter Notebook**
 
-Clean, user‑centric layout with real test‑set data
+---
 
-📊 Tools & Technologies
-Python
-
-Pandas, NumPy
-
-Scikit‑Learn, XGBoost, Imbalanced‑Learn
-
-PyTorch Geometric (GraphSAGE)
-
-UMAP / t‑SNE
-
-Matplotlib, Seaborn
-
-Streamlit
-
-Jupyter Notebook
-
-
-⭐ If you find this project interesting, feel free to star the repo!
+## ⭐ If you find this project interesting, feel free to star the repo!
